@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.css"
+    />
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+
+    <style>
+      html,
+      body,
+      #map {
+        height: 100vh;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      .output {
+        position: absolute;
+        z-index: 1000;
+        right: 0;
+        width: 199px;
+        height: 71px;
+      }
+      #coords {
+        width: 199px;
+        max-width: 199px;
+        min-width: 199px;
+        height: 71px;
+      }
+    </style>
+  </head>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/0.4.2/leaflet.draw.js"></script>
+  <body>
+    <div class="output">
+      <textarea name="text" id="coords"></textarea>
+      <button id="copyBtn">Copy</button>
+    </div>
+    <div id="map"></div>
+  </body>
+  <script>
+    var map = L.map("map").setView([48.3794, 31.1656], 6); // Latitude, Longitude, Zoom
+
+    // Add OpenStreetMap tiles
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    }).addTo(map);
+
+    // Optional: Add a marker in Kyiv
+    L.marker([50.4501, 30.5234])
+      .addTo(map)
+      .bindPopup("Kyiv, Ukraine")
+      .openPopup();
+
+    const drawControl = new L.Control.Draw();
+    map.addControl(drawControl);
+    const copyBtn = document.getElementById("copyBtn");
+    const coords = document.getElementById("coords");
+
+    copyBtn.addEventListener("click", () => {
+      coords.select(); // Select the text
+      coords.setSelectionRange(0, 99999); // For mobile devices
+      navigator.clipboard
+        .writeText(coords.value) // Copy to clipboard
+        .then(() => alert("Text copied!"))
+        .catch((err) => console.error("Failed to copy text: ", err));
+    });
+
+    const drawnFreatures = new L.FeatureGroup();
+    map.addLayer(drawnFreatures);
+    map.on("draw:created", (e) => {
+      const type = e.layerType;
+      const layer = e.layer;
+      drawnFreatures.addLayer(layer);
+      if (e.layer._latlng) {
+        coords.value = e.layer._latlng;
+        console.log("poly");
+      }
+      if (e.layer._latlngs) {
+        coords.value = JSON.stringify(
+          e.layer._latlngs[0].map((coords) => {
+            return [coords.lat, coords.lng];
+          })
+        );
+        console.log(
+          e.layer._latlngs[0].map((coords) => {
+            return [coords.lat, coords.lng];
+          })
+        );
+      }
+    });
+  </script>
+</html>
